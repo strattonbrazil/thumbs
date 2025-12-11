@@ -6,64 +6,18 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      padding: 0;
       background: #1e1e1e;
       color: #fff;
     }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    h1 {
-      text-align: center;
-    }
-    .controls {
-      margin: 20px 0;
-      padding: 15px;
-      background: #2d2d2d;
-      border-radius: 8px;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 20px;
-      background: #0078d4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #106ebe;
-    }
-    #canvas {
-      border: 2px solid #444;
-      display: block;
-      margin: 20px auto;
-      background: #000;
-    }
-    .info {
-      text-align: center;
-      margin: 10px 0;
-      color: #aaa;
+    #root {
+      margin: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎨 Rust Native Texture Renderer</h1>
-    
-    <div class="controls">
-      <button id="btnGradient">Generate Gradient</button>
-      <button id="btnCheckerboard">Generate Checkerboard</button>
-      <button id="btnPlasma">Animated Plasma</button>
-      <button id="btnStopAnimation">Stop Animation</button>
-    </div>
-    
-    <div class="info" id="info">Click a button to generate textures from Rust</div>
-    
-    <canvas id="canvas" width="512" height="512"></canvas>
-  </div>
-  
+  <div id="root"></div>
   <script src="dist/renderer.js"></script>
 </body>
 </html>

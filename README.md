@@ -22,5 +22,31 @@ npm start
 
 ## Development
 
-- **JS changes**: Just restart the app
-- **Rust changes**: Run `npm run build-native` then restart
+### Live Reloading
+
+For development with automatic reloading on file changes:
+
+```bash
+npm run dev
+```
+
+This will:
+- Watch for changes in TypeScript files (main, preload, renderer, App)
+- Automatically rebuild when files change
+- Reload the Electron window when renderer files change
+- Restart the app when main/preload files change
+
+### Manual Build
+
+```bash
+# Build once
+npm run build
+
+# Run the app
+npm start
+```
+
+### File Changes
+
+- **TypeScript/React changes**: Automatically reloaded when using `npm run dev`
+- **Rust changes**: Run `npm run build-native` then the app will reload
