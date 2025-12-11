@@ -1,12 +1,17 @@
 {
   "name": "electron-rust-texture",
   "version": "1.0.0",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "electron .",
-    "build-native": "cd native && npm run build && cd .."
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "build-native": "cd native && npm run build && cd ..",
+    "watch": "tsc --watch"
   },
   "devDependencies": {
-    "electron": "^28.0.0"
-  }
+    "@types/node": "^20.0.0",
+    "electron": "^28.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {}
 }
