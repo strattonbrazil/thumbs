@@ -2,6 +2,7 @@
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
+use std::fs;
 
 #[napi]
 pub struct TextureGenerator {
@@ -93,4 +94,83 @@ impl TextureGenerator {
     pub fn get_height(&self) -> u32 {
         self.height
     }
+}
+
+/// Directory information
+#[napi(object)]
+pub struct DirectoryInfo {
+    pub name: String,
+    pub path: String,
+    pub is_directory: bool,
+}
+
+/// List directories in a given path (relative to user's home directory)
+#[napi]
+pub fn list_directories(relative_path: String) -> Result<Vec<DirectoryInfo>> {
+    // Get user's home directory
+    let home_dir = dirs::home_dir()
+        .ok_or_else(|| Error::from_reason("Could not determine home directory"))?;
+    
+    // Build absolute path
+    let absolute_path = if relative_path.is_empty() || relative_path == "." {
+        home_dir
+    } else {
+        home_dir.join(relative_path)
+    };
+    
+    // Check if path exists and is a directory
+    if !absolute_path.exists() {
+        return Err(Error::from_reason(format!(
+            "Path does not exist: {}",
+            absolute_path.display()
+        )));
+    }
+    
+    if !absolute_path.is_dir() {
+        return Err(Error::from_reason(format!(
+            "Path is not a directory: {}",
+            absolute_path.display()
+        )));
+    }
+    
+    // Read directory entries
+    let entries = fs::read_dir(&absolute_path)
+        .map_err(|e| Error::from_reason(format!("Failed to read directory: {}", e)))?;
+    
+    let mut directories = Vec::new();
+    
+    for entry in entries {
+        let entry = entry.map_err(|e| Error::from_reason(format!("Failed to read entry: {}", e)))?;
+        let path = entry.path();
+        
+        // Only include directories
+        if path.is_dir() {
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+            
+            // Skip hidden directories (those starting with a dot)
+            if name.starts_with('.') {
+                continue;
+            }
+            
+            let full_path = path
+                .to_str()
+                .ok_or_else(|| Error::from_reason("Invalid path encoding"))?
+                .to_string();
+            
+            directories.push(DirectoryInfo {
+                name,
+                path: full_path,
+                is_directory: true,
+            });
+        }
+    }
+    
+    // Sort directories by name (case-insensitive so same letters with different casing are adjacent)
+    directories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    
+    Ok(directories)
 }
