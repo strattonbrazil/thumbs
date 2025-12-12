@@ -30,6 +30,7 @@ interface TreeNode {
 
 const DirectoryTree: React.FC = () => {
   const [treeRoot, setTreeRoot] = useState<TreeNode | null>(null);
+  const [expanded, setExpanded] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +58,10 @@ const DirectoryTree: React.FC = () => {
         // Convert to TreeNode format and set root
         const rootNode = convertToTreeNode(directory);
         setTreeRoot(rootNode);
+        // Initialize controlled expansion with the root node expanded
+        setExpanded([rootNode.id]);
+        // Try again after a tick in case TreeView isn't mounted yet
+        setTimeout(() => setExpanded([rootNode.id]), 50);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load directories');
         console.error('Error loading directories:', err);
@@ -67,6 +72,13 @@ const DirectoryTree: React.FC = () => {
 
     loadDirectories();
   }, []);
+
+  // Ensure the root is expanded when it's first set
+  useEffect(() => {
+    if (treeRoot) {
+      setExpanded([treeRoot.id]);
+    }
+  }, [treeRoot]);
 
   const renderTreeItem = (node: TreeNode): React.ReactNode => {   
     return (
@@ -121,6 +133,8 @@ const DirectoryTree: React.FC = () => {
 
   return (
     <SimpleTreeView
+      expandedItems={expanded}
+      onExpandedItemsChange={(_: unknown, ids: string[]) => setExpanded(ids)}
       slots={{
         collapseIcon: ExpandMoreIcon,
         expandIcon: ChevronRightIcon,
