@@ -102,22 +102,25 @@ pub struct DirectoryInfo {
     pub name: String,
     pub path: String,
     pub is_directory: bool,
+    pub children: Vec<DirectoryInfo>,
 }
 
-/// List directories in a given path (relative to user's home directory)
+/// Return a directory tree rooted at the queried path. The root contains its immediate
+/// child directories in `children`, and each child contains its own immediate children
+/// (depth = 2). Hidden entries (starting with a dot) are skipped. Not recursive.
 #[napi]
-pub fn list_directories(relative_path: String) -> Result<Vec<DirectoryInfo>> {
+pub fn get_dir_children(relative_path: String) -> Result<DirectoryInfo> {
     // Get user's home directory
     let home_dir = dirs::home_dir()
         .ok_or_else(|| Error::from_reason("Could not determine home directory"))?;
-    
+
     // Build absolute path
     let absolute_path = if relative_path.is_empty() || relative_path == "." {
         home_dir
     } else {
         home_dir.join(relative_path)
     };
-    
+
     // Check if path exists and is a directory
     if !absolute_path.exists() {
         return Err(Error::from_reason(format!(
@@ -125,52 +128,90 @@ pub fn list_directories(relative_path: String) -> Result<Vec<DirectoryInfo>> {
             absolute_path.display()
         )));
     }
-    
+
     if !absolute_path.is_dir() {
         return Err(Error::from_reason(format!(
             "Path is not a directory: {}",
             absolute_path.display()
         )));
     }
-    
-    // Read directory entries
-    let entries = fs::read_dir(&absolute_path)
-        .map_err(|e| Error::from_reason(format!("Failed to read directory: {}", e)))?;
-    
-    let mut directories = Vec::new();
-    
-    for entry in entries {
-        let entry = entry.map_err(|e| Error::from_reason(format!("Failed to read entry: {}", e)))?;
-        let path = entry.path();
-        
-        // Only include directories
-        if path.is_dir() {
-            let name = path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("unknown")
-                .to_string();
-            
-            // Skip hidden directories (those starting with a dot)
-            if name.starts_with('.') {
-                continue;
-            }
-            
-            let full_path = path
+
+    // Root identity
+    let root_name = absolute_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| {
+            absolute_path
                 .to_str()
-                .ok_or_else(|| Error::from_reason("Invalid path encoding"))?
-                .to_string();
-            
-            directories.push(DirectoryInfo {
-                name,
-                path: full_path,
-                is_directory: true,
-            });
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
+        });
+
+    let root_path = absolute_path
+        .to_str()
+        .ok_or_else(|| Error::from_reason("Invalid path encoding"))?
+        .to_string();
+
+    // Collect root's immediate child directories
+    let mut root_children = Vec::new();
+    if let Ok(entries) = fs::read_dir(&absolute_path) {
+        for entry in entries.flatten() {
+            let child_path = entry.path();
+            if child_path.is_dir() {
+                if let Some(child_name) = child_path.file_name().and_then(|n| n.to_str()) {
+                    if child_name.starts_with('.') {
+                        continue;
+                    }
+
+                    // Build child's path string
+                    if let Some(child_full) = child_path.to_str() {
+                        // Collect child's immediate children (depth 2)
+                        let mut grand_children = Vec::new();
+                        if let Ok(grand_entries) = fs::read_dir(&child_path) {
+                            for grand_entry in grand_entries.flatten() {
+                                let grand_path = grand_entry.path();
+                                if grand_path.is_dir() {
+                                    if let Some(grand_name) = grand_path.file_name().and_then(|n| n.to_str()) {
+                                        if grand_name.starts_with('.') {
+                                            continue;
+                                        }
+
+                                        if let Some(grand_full) = grand_path.to_str() {
+                                            grand_children.push(DirectoryInfo {
+                                                name: grand_name.to_string(),
+                                                path: grand_full.to_string(),
+                                                is_directory: true,
+                                                children: Vec::new(),
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Sort grandchildren
+                        grand_children.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+                        root_children.push(DirectoryInfo {
+                            name: child_name.to_string(),
+                            path: child_full.to_string(),
+                            is_directory: true,
+                            children: grand_children,
+                        });
+                    }
+                }
+            }
         }
     }
-    
-    // Sort directories by name (case-insensitive so same letters with different casing are adjacent)
-    directories.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-    
-    Ok(directories)
+
+    // Sort root children
+    root_children.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+    Ok(DirectoryInfo {
+        name: root_name,
+        path: root_path,
+        is_directory: true,
+        children: root_children,
+    })
 }

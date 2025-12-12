@@ -8,10 +8,11 @@ interface DirectoryInfo {
   name: string;
   path: string;
   isDirectory: boolean;
+  children?: DirectoryInfo[];
 }
 
 interface NativeDirectoryAPI {
-  listDirectories: (relativePath: string) => DirectoryInfo[];
+  getDirChildren: (relativePath: string) => DirectoryInfo;
 }
 
 declare global {
@@ -28,17 +29,18 @@ interface TreeNode {
 }
 
 const DirectoryTree: React.FC = () => {
-  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  const [treeRoot, setTreeRoot] = useState<TreeNode | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Convert DirectoryInfo to TreeNode
   const convertToTreeNode = (dirInfo: DirectoryInfo): TreeNode => {
+    const children = dirInfo.children?.map((child) => convertToTreeNode(child)) ?? [];
     return {
       id: dirInfo.path,
       label: dirInfo.name,
       path: dirInfo.path,
-      children: undefined, // Will be loaded lazily if needed
+      children: children, 
     };
   };
 
@@ -50,12 +52,11 @@ const DirectoryTree: React.FC = () => {
         setError(null);
         
         // Get directories from home directory (empty string = home dir)
-        const directories = window.nativeDirectory.listDirectories('');
+        const directory = window.nativeDirectory.getDirChildren('');
         
-        // Convert to TreeNode format
-        const nodes = directories.map(convertToTreeNode);
-        
-        setTreeData(nodes);
+        // Convert to TreeNode format and set root
+        const rootNode = convertToTreeNode(directory);
+        setTreeRoot(rootNode);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load directories');
         console.error('Error loading directories:', err);
@@ -112,7 +113,7 @@ const DirectoryTree: React.FC = () => {
     );
   }
 
-  if (treeData.length === 0) {
+  if (treeRoot == null) {
     return (
       <div style={{ padding: '20px', color: '#aaa', textAlign: 'center' }}>
         No directories found
@@ -138,7 +139,7 @@ const DirectoryTree: React.FC = () => {
         color: '#fff',
       }}
     >
-      {treeData.map((node) => renderTreeItem(node))}
+      {renderTreeItem(treeRoot)}
     </SimpleTreeView>
   );
 };

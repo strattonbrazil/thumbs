@@ -8,9 +8,14 @@ export interface DirectoryInfo {
   name: string
   path: string
   isDirectory: boolean
+  children: Array<DirectoryInfo>
 }
-/** List directories in a given path (relative to user's home directory) */
-export declare function listDirectories(relativePath: string): Array<DirectoryInfo>
+/**
+ * Return a directory tree rooted at the queried path. The root contains its immediate
+ * child directories in `children`, and each child contains its own immediate children
+ * (depth = 2). Hidden entries (starting with a dot) are skipped. Not recursive.
+ */
+export declare function getDirChildren(relativePath: string): DirectoryInfo
 export declare class TextureGenerator {
   constructor(width: number, height: number)
   /** Generate a procedural texture (gradient pattern) */

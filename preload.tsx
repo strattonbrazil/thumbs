@@ -2,7 +2,7 @@ import { contextBridge } from 'electron';
 import * as path from 'path';
 
 // Use require for native module (CommonJS)
-const { TextureGenerator, listDirectories } = require(path.join(__dirname, '..', 'native'));
+const { TextureGenerator, getDirChildren } = require(path.join(__dirname, '..', 'native'));
 
 // Create a single generator instance
 const generator = new TextureGenerator(512, 512);
@@ -22,7 +22,7 @@ interface NativeTextureAPI {
 }
 
 interface NativeDirectoryAPI {
-  listDirectories: (relativePath: string) => DirectoryInfo[];
+  getDirChildren: (relativePath: string) => DirectoryInfo;
 }
 
 contextBridge.exposeInMainWorld('nativeTexture', {
@@ -34,7 +34,7 @@ contextBridge.exposeInMainWorld('nativeTexture', {
 } as NativeTextureAPI);
 
 contextBridge.exposeInMainWorld('nativeDirectory', {
-  listDirectories: (relativePath: string) => listDirectories(relativePath)
+  getDirChildren: (relativePath: string) => getDirChildren(relativePath)
 } as NativeDirectoryAPI);
 
 declare global {
