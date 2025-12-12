@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '@mui/material/styles';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -29,6 +30,8 @@ interface TreeNode {
 }
 
 const DirectoryTree: React.FC = () => {
+  const theme = useTheme();
+
   const [treeRoot, setTreeRoot] = useState<TreeNode | null>(null);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -87,16 +90,16 @@ const DirectoryTree: React.FC = () => {
         itemId={node.id}
         label={node.label}
         sx={{
-          color: '#fff',
+          color: theme.palette.text.primary,
           '& .MuiTreeItem-content': {
-            color: '#fff',
+            color: theme.palette.text.primary,
             '&:hover': {
-              backgroundColor: '#2d2d2d',
+              backgroundColor: theme.palette.action.hover,
             },
             '&.Mui-selected': {
-              backgroundColor: '#0078d4',
+              backgroundColor: theme.palette.action.selected || theme.palette.primary.main,
               '&:hover': {
-                backgroundColor: '#106ebe',
+                backgroundColor: theme.palette.primary.dark,
               },
             },
           },
@@ -140,15 +143,15 @@ const DirectoryTree: React.FC = () => {
         expandIcon: ChevronRightIcon,
       }}
       slotProps={{
-        collapseIcon: { sx: { color: '#fff' } },
-        expandIcon: { sx: { color: '#fff' } },
+        collapseIcon: { sx: { color: theme.palette.text.primary } },
+        expandIcon: { sx: { color: theme.palette.text.primary } },
       }}
       sx={{
         flexGrow: 1,
         maxWidth: '100%',
         overflowY: 'auto',
         padding: '10px',
-        color: '#fff',
+        color: theme.palette.text.primary,
       }}
     >
       {renderTreeItem(treeRoot)}

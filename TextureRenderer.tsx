@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import Button from '@mui/material/Button';
 
 interface NativeTextureAPI {
   generateGradient: () => Buffer;
@@ -20,7 +21,6 @@ const HEIGHT = 512;
 const TextureRenderer: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [info, setInfo] = useState<string>('Ready! Texture generator initialized with Rust backend.');
-  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const animationIdRef = useRef<number | null>(null);
 
   const renderTexture = useCallback((buffer: Buffer): void => {
@@ -101,18 +101,18 @@ const TextureRenderer: React.FC = () => {
       <h1>Rust Native Texture Renderer</h1>
 
       <div>
-        <button onClick={handleGradient} onMouseEnter={() => setHoveredButton('gradient')} onMouseLeave={() => setHoveredButton(null)}>
+        <Button variant="contained" color="primary" onClick={handleGradient} sx={{ mr: 1 }}>
           Generate Gradient
-        </button>
-        <button onClick={handleCheckerboard} onMouseEnter={() => setHoveredButton('checkerboard')} onMouseLeave={() => setHoveredButton(null)}>
+        </Button>
+        <Button variant="contained" color="primary" onClick={handleCheckerboard} sx={{ mr: 1 }}>
           Generate Checkerboard
-        </button>
-        <button onClick={handlePlasma} onMouseEnter={() => setHoveredButton('plasma')} onMouseLeave={() => setHoveredButton(null)}>
+        </Button>
+        <Button variant="contained" color="primary" onClick={handlePlasma} sx={{ mr: 1 }}>
           Animated Plasma
-        </button>
-        <button onClick={handleStopAnimation} onMouseEnter={() => setHoveredButton('stop')} onMouseLeave={() => setHoveredButton(null)}>
+        </Button>
+        <Button variant="contained" color="primary" onClick={handleStopAnimation}>
           Stop Animation
-        </button>
+        </Button>
       </div>
 
       <div>{info}</div>
