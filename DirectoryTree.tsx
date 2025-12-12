@@ -25,7 +25,7 @@ interface TreeNode {
   id: string;
   label: string;
   path: string;
-  children?: TreeNode[];
+  children: TreeNode[];
 }
 
 const DirectoryTree: React.FC = () => {
@@ -68,9 +68,7 @@ const DirectoryTree: React.FC = () => {
     loadDirectories();
   }, []);
 
-  const renderTreeItem = (node: TreeNode): React.ReactNode => {
-    const hasChildren = node.children && node.children.length > 0;
-    
+  const renderTreeItem = (node: TreeNode): React.ReactNode => {   
     return (
       <TreeItem
         key={node.id}
@@ -92,7 +90,7 @@ const DirectoryTree: React.FC = () => {
           },
         }}
       >
-        {hasChildren ? node.children.map((child) => renderTreeItem(child)) : null}
+        {node.children.map((child) => renderTreeItem(child))}
       </TreeItem>
     );
   };
