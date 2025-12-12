@@ -97,108 +97,33 @@ const TextureRenderer: React.FC = () => {
   }, [stopAnimation]);
 
   return (
-    <div style={styles.textureContainer}>
-      <h1 style={styles.title}>🎨 Rust Native Texture Renderer</h1>
-      
-      <div style={styles.controls}>
-        <button
-          style={{
-            ...styles.button,
-            ...(hoveredButton === 'gradient' ? styles.buttonHover : {}),
-          }}
-          onClick={handleGradient}
-          onMouseEnter={() => setHoveredButton('gradient')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
+    <div>
+      <h1>Rust Native Texture Renderer</h1>
+
+      <div>
+        <button onClick={handleGradient} onMouseEnter={() => setHoveredButton('gradient')} onMouseLeave={() => setHoveredButton(null)}>
           Generate Gradient
         </button>
-        <button
-          style={{
-            ...styles.button,
-            ...(hoveredButton === 'checkerboard' ? styles.buttonHover : {}),
-          }}
-          onClick={handleCheckerboard}
-          onMouseEnter={() => setHoveredButton('checkerboard')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
+        <button onClick={handleCheckerboard} onMouseEnter={() => setHoveredButton('checkerboard')} onMouseLeave={() => setHoveredButton(null)}>
           Generate Checkerboard
         </button>
-        <button
-          style={{
-            ...styles.button,
-            ...(hoveredButton === 'plasma' ? styles.buttonHover : {}),
-          }}
-          onClick={handlePlasma}
-          onMouseEnter={() => setHoveredButton('plasma')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
+        <button onClick={handlePlasma} onMouseEnter={() => setHoveredButton('plasma')} onMouseLeave={() => setHoveredButton(null)}>
           Animated Plasma
         </button>
-        <button
-          style={{
-            ...styles.button,
-            ...(hoveredButton === 'stop' ? styles.buttonHover : {}),
-          }}
-          onClick={handleStopAnimation}
-          onMouseEnter={() => setHoveredButton('stop')}
-          onMouseLeave={() => setHoveredButton(null)}
-        >
+        <button onClick={handleStopAnimation} onMouseEnter={() => setHoveredButton('stop')} onMouseLeave={() => setHoveredButton(null)}>
           Stop Animation
         </button>
       </div>
-      
-      <div style={styles.info}>{info}</div>
-      
-      <canvas
-        ref={canvasRef}
-        width={WIDTH}
-        height={HEIGHT}
-        style={styles.canvas}
-      />
+
+      <div>{info}</div>
+
+      <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} style={{ display: 'block', margin: '20px auto' }} />
     </div>
   );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
-  textureContainer: {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '20px',
-  },
-  title: {
-    textAlign: 'center',
-    color: '#fff',
-  },
-  controls: {
-    margin: '20px 0',
-    padding: '15px',
-    background: '#2d2d2d',
-    borderRadius: '8px',
-  },
-  button: {
-    margin: '5px',
-    padding: '10px 20px',
-    background: '#0078d4',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  buttonHover: {
-    background: '#106ebe',
-  },
-  info: {
-    textAlign: 'center',
-    margin: '10px 0',
-    color: '#aaa',
-  },
-  canvas: {
-    border: '2px solid #444',
-    display: 'block',
-    margin: '20px auto',
-    background: '#000',
-  },
-};
+// Minimal styling only for canvas centering
+// (most styles removed per request)
 
 export default TextureRenderer;
 
