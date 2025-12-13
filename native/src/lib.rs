@@ -215,3 +215,58 @@ pub fn get_dir_children(relative_path: String) -> Result<DirectoryInfo> {
         children: root_children,
     })
 }
+
+/// Photo information returned to the JS side
+#[napi(object)]
+pub struct PhotoInfo {
+    pub name: String,
+    pub native_render: bool,
+}
+
+/// Given an absolute directory path, return a sorted list of files in that
+/// directory which match common image file extensions. Each returned item
+/// includes the file name and a `native_render` flag (hardcoded to false).
+#[napi]
+pub fn get_dir_photos(absolute_path: String) -> Result<Vec<PhotoInfo>> {
+    let path = std::path::Path::new(&absolute_path);
+
+    if !path.exists() {
+        return Err(Error::from_reason(format!("Path does not exist: {}", absolute_path)));
+    }
+
+    if !path.is_dir() {
+        return Err(Error::from_reason(format!("Path is not a directory: {}", absolute_path)));
+    }
+
+    // common image extensions
+    let exts = ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "heic", "svg"];
+
+    let mut photos: Vec<PhotoInfo> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(path) {
+        println!("Reading directory: {}", absolute_path);
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_file() {
+                if let Some(ext) = p.extension().and_then(|e| e.to_str()) {
+                    let ext_l = ext.to_lowercase();
+                    if exts.contains(&ext_l.as_str()) {
+                        if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
+                            photos.push(PhotoInfo {
+                                name: name.to_string(),
+                                native_render: false,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // sort by name, case-insensitive
+    photos.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+
+    println!("Found {} photos in {}", photos.len(), absolute_path);
+
+    Ok(photos)
+}

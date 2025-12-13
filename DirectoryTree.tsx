@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useFocusedDirectoryStore } from './FocusedDirectoryStore';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -36,6 +37,7 @@ const DirectoryTree: React.FC = () => {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const setFocusedPath = useFocusedDirectoryStore((s) => s.setPath);
 
   // Convert DirectoryInfo to TreeNode
   const convertToTreeNode = (dirInfo: DirectoryInfo): TreeNode => {
@@ -138,6 +140,10 @@ const DirectoryTree: React.FC = () => {
     <SimpleTreeView
       expandedItems={expanded}
       onExpandedItemsChange={(_: unknown, ids: string[]) => setExpanded(ids)}
+      onItemClick={(_: unknown, id: string) => {
+        // Update focused directory store with the clicked item's id (path)
+        setFocusedPath(id as string);
+      }}
       slots={{
         collapseIcon: ExpandMoreIcon,
         expandIcon: ChevronRightIcon,

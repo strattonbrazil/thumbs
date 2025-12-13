@@ -16,6 +16,17 @@ export interface DirectoryInfo {
  * (depth = 2). Hidden entries (starting with a dot) are skipped. Not recursive.
  */
 export declare function getDirChildren(relativePath: string): DirectoryInfo
+/** Photo information returned to the JS side */
+export interface PhotoInfo {
+  name: string
+  nativeRender: boolean
+}
+/**
+ * Given an absolute directory path, return a sorted list of files in that
+ * directory which match common image file extensions. Each returned item
+ * includes the file name and a `native_render` flag (hardcoded to false).
+ */
+export declare function getDirPhotos(absolutePath: string): Array<PhotoInfo>
 export declare class TextureGenerator {
   constructor(width: number, height: number)
   /** Generate a procedural texture (gradient pattern) */

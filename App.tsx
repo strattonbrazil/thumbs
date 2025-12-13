@@ -4,6 +4,7 @@ import 'split-pane-react/esm/themes/default.css';
 import DirectoryTree from './DirectoryTree';
 import TextureRenderer from './TextureRenderer';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import TileBrowserPane from './TileBrowserPane';
 
 const App: React.FC = () => {
   const [sizes, setSizes] = React.useState<(string | number)[]>(['30%', '70%']);
@@ -40,7 +41,8 @@ const App: React.FC = () => {
               </div>
             </Pane>
             <div style={{ ...styles.rightPane, background: theme.palette.background.default, color: theme.palette.text.primary }}>
-              <TextureRenderer />
+              {false && <TextureRenderer /> }
+              <TileBrowserPane />
             </div>
         </SplitPane>
       </div>

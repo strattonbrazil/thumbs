@@ -4,10 +4,10 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.main.json && npm run build:renderer",
-    "build:renderer": "esbuild renderer.tsx --bundle --format=iife --global-name=Renderer --outfile=dist/renderer.js --external:electron --platform=browser --target=es2020",
+    "build:renderer": "esbuild renderer.tsx --bundle --sourcemap --format=iife --global-name=Renderer --outfile=dist/renderer.js --external:electron --platform=browser --target=es2020",
     "start": "npm run build && electron .",
     "dev": "npm run build && concurrently \"npm run watch\" \"wait-on dist/main.js dist/renderer.js && electron .\"",
-    "watch": "concurrently \"tsc -p tsconfig.main.json --watch\" \"esbuild renderer.tsx --bundle --format=iife --global-name=Renderer --outfile=dist/renderer.js --external:electron --platform=browser --target=es2020 --watch\"",
+    "watch": "concurrently \"tsc -p tsconfig.main.json --watch\" \"esbuild renderer.tsx --bundle --sourcemap --format=iife --global-name=Renderer --outfile=dist/renderer.js --external:electron --platform=browser --target=es2020 --watch\"",
     "build-native": "cd native && npm run build && cd .."
   },
   "devDependencies": {
@@ -30,6 +30,7 @@
     "@mui/x-tree-view": "^8.21.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "split-pane-react": "^0.1.3"
+    "split-pane-react": "^0.1.3",
+    "zustand": "^4.3.11"
   }
 }
