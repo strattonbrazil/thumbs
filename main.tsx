@@ -32,7 +32,11 @@ function createWindow(): void {
     }
   });
 
-  mainWindow.loadFile('index.html');
+  if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
+    mainWindow.loadURL('http://localhost:5173');
+  } else {
+    mainWindow.loadFile('index.html');
+  }
   mainWindow.webContents.openDevTools();
 
   // Reload renderer when renderer files change (but not main process files)
