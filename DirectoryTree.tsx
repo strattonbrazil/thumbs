@@ -5,6 +5,7 @@ import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import Typography from '@mui/material/Typography';
 
 interface DirectoryInfo {
   name: string;
@@ -90,7 +91,9 @@ const DirectoryTree: React.FC = () => {
       <TreeItem
         key={node.id}
         itemId={node.id}
-        label={node.label}
+        label={
+          <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>{node.label}</Typography>
+        }
         sx={{
           color: theme.palette.text.primary,
           '& .MuiTreeItem-content': {

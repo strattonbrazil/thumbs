@@ -11,6 +11,7 @@ napi = "2"
 napi-derive = "2"
 image = "0.24"
 dirs = "5.0"
+base64 = "0.21"
 
 [build-dependencies]
 napi-build = "2"

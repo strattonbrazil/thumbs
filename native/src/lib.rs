@@ -3,6 +3,12 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use std::fs;
+use std::io::Cursor;
+use image::ImageOutputFormat;
+use image::imageops::FilterType;
+use image::{DynamicImage, GenericImageView};
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
+use base64::Engine as _;
 
 #[napi]
 pub struct TextureGenerator {
@@ -269,4 +275,79 @@ pub fn get_dir_photos(absolute_path: String) -> Result<Vec<PhotoInfo>> {
     println!("Found {} photos in {}", photos.len(), absolute_path);
 
     Ok(photos)
+}
+
+/// Thumbnail information
+#[napi(object)]
+pub struct ThumbnailInfo {
+    pub data_base64: String,
+    pub thumb_width: u32,
+    pub thumb_height: u32,
+    pub full_width: u32,
+    pub full_height: u32,
+}
+
+/// Generate a thumbnail for the provided absolute image path. The thumbnail is scaled down
+/// to fit within 256x256 while preserving aspect ratio (no upscaling). Returns a base64-encoded
+/// PNG buffer and both thumbnail and full-size dimensions.
+#[napi]
+pub fn get_thumbnail(absolute_path: String) -> Result<ThumbnailInfo> {
+    let path = std::path::Path::new(&absolute_path);
+
+    if !path.exists() {
+        return Err(Error::from_reason(format!("Path does not exist: {}", absolute_path)));
+    }
+
+    if !path.is_file() {
+        return Err(Error::from_reason(format!("Path is not a file: {}", absolute_path)));
+    }
+
+    // Load image (let image crate guess the format)
+    let reader = image::io::Reader::open(path)
+        .map_err(|e| Error::from_reason(format!("Failed to open image: {}", e)))?;
+    let img = reader
+        .with_guessed_format()
+        .map_err(|e| Error::from_reason(format!("Failed to guess image format: {}", e)))?
+        .decode()
+        .map_err(|e| Error::from_reason(format!("Failed to decode image: {}", e)))?;
+
+    // Convert to a consistent pixel format (RGBA8) and get full dimensions
+    let base_img = img.to_rgba8();
+    let (full_w, full_h) = base_img.dimensions();
+
+    // Compute scale (don't upscale)
+    let max_dim = 256.0f32;
+    let scale_w = max_dim / full_w as f32;
+    let scale_h = max_dim / full_h as f32;
+    let scale = scale_w.min(scale_h).min(1.0);
+
+    let thumb_w = ((full_w as f32) * scale).round().max(1.0) as u32;
+    let thumb_h = ((full_h as f32) * scale).round().max(1.0) as u32;
+
+    // Resize or clone the RGBA buffer
+    let thumb_buffer = if scale < 1.0 {
+        image::imageops::resize(&base_img, thumb_w, thumb_h, FilterType::Lanczos3)
+    } else {
+        base_img.clone()
+    };
+
+    // Wrap into DynamicImage for encoding
+    let thumb_dyn = DynamicImage::ImageRgba8(thumb_buffer);
+
+    // Encode thumbnail as PNG into memory
+    let mut buf: Vec<u8> = Vec::new();
+    let mut cursor = Cursor::new(&mut buf);
+    thumb_dyn
+        .write_to(&mut cursor, ImageOutputFormat::Png)
+        .map_err(|e| Error::from_reason(format!("Failed to encode thumbnail: {}", e)))?;
+
+    let b64 = BASE64_STANDARD.encode(&buf);
+
+    Ok(ThumbnailInfo {
+        data_base64: b64,
+        thumb_width: thumb_w,
+        thumb_height: thumb_h,
+        full_width: full_w,
+        full_height: full_h,
+    })
 }

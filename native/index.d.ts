@@ -27,6 +27,20 @@ export interface PhotoInfo {
  * includes the file name and a `native_render` flag (hardcoded to false).
  */
 export declare function getDirPhotos(absolutePath: string): Array<PhotoInfo>
+/** Thumbnail information */
+export interface ThumbnailInfo {
+  dataBase64: string
+  thumbWidth: number
+  thumbHeight: number
+  fullWidth: number
+  fullHeight: number
+}
+/**
+ * Generate a thumbnail for the provided absolute image path. The thumbnail is scaled down
+ * to fit within 256x256 while preserving aspect ratio (no upscaling). Returns a base64-encoded
+ * PNG buffer and both thumbnail and full-size dimensions.
+ */
+export declare function getThumbnail(absolutePath: string): ThumbnailInfo
 export declare class TextureGenerator {
   constructor(width: number, height: number)
   /** Generate a procedural texture (gradient pattern) */

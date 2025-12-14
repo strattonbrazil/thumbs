@@ -310,8 +310,9 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { TextureGenerator, getDirChildren, getDirPhotos } = nativeBinding
+const { TextureGenerator, getDirChildren, getDirPhotos, getThumbnail } = nativeBinding
 
 module.exports.TextureGenerator = TextureGenerator
 module.exports.getDirChildren = getDirChildren
 module.exports.getDirPhotos = getDirPhotos
+module.exports.getThumbnail = getThumbnail
