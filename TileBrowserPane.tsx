@@ -1,6 +1,13 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
-import { Box, Paper, Typography, Tooltip, Button } from '@mui/material';
+import { Box, Paper, Typography, Tooltip, Button, Slider } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import CropSquareIcon from '@mui/icons-material/CropSquare';
 import useFocusedDirectoryStore from './FocusedDirectoryStore';
 import useFocusedPhotoStore from './FocusedPhotoStore';
 import FocusedPhotoModal from './FocusedPhotoModal';
@@ -10,7 +17,9 @@ interface PhotoInfo {
   native_render: boolean;
 }
 
-const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string }> = ({ photo, basePath }) => {
+type ZoomLevel = 'ICON' | 'GALLERY' | 'LIST';
+
+const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: number; zoomLevel?: ZoomLevel }> = ({ photo, basePath, tileSize = 240, zoomLevel = 'GALLERY' }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<number | null>(null);
   const [active, setActive] = useState(false);
@@ -123,14 +132,14 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string }> = ({ photo, b
           //setFocusedPhoto(fullPath);
         }}
         sx={{
-          width: 240,
-          height: 180,
+          width: zoomLevel === 'LIST' ? '100%' : tileSize,
+          height: zoomLevel === 'LIST' ? 'auto' : Math.round(tileSize * 0.75),
           bgcolor: active ? undefined : 'grey',
           borderRadius: 1,
           cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: zoomLevel === 'LIST' ? 'block' : 'flex',
+          alignItems: zoomLevel === 'LIST' ? undefined : 'center',
+          justifyContent: zoomLevel === 'LIST' ? undefined : 'center',
           overflow: 'hidden',
           position: 'relative',
           boxSizing: 'border-box',
@@ -140,6 +149,7 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string }> = ({ photo, b
           '&:hover': {
             borderWidth: '4px',
           },
+          mb: zoomLevel === 'LIST' ? 1 : undefined,
         }}
       >
         {thumb ? (
@@ -147,10 +157,10 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string }> = ({ photo, b
             src={`data:image/png;base64,${thumb.b64}`}
             onLoad={() => setImgLoaded(true)}
             style={{
-              objectFit: 'contain',
+              objectFit: zoomLevel === 'LIST' ? 'contain' : 'cover',
               objectPosition: 'center',
               width: '100%',
-              height: '100%',
+              height: zoomLevel === 'LIST' ? 'auto' : '100%',
               display: 'block',
               boxSizing: 'border-box',
             }}
@@ -163,11 +173,12 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string }> = ({ photo, b
 };
 
 // Photo tile list component (kept above main component)
-const PhotoTiles: React.FC<{ photos: PhotoInfo[]; basePath?: string }> = ({ photos, basePath }) => {
+const PhotoTiles: React.FC<{ photos: PhotoInfo[]; basePath?: string; tileSize?: number; zoomLevel?: ZoomLevel }> = ({ photos, basePath, tileSize, zoomLevel }) => {
+  const isList = zoomLevel === 'LIST';
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+    <Box sx={{ display: isList ? 'block' : 'flex', flexWrap: isList ? 'nowrap' : 'wrap', flexDirection: isList ? 'column' : 'row', gap: 1, mt: 1 }}>
       {photos.map((p) => (
-        <PhotoTile key={p.name} photo={p} basePath={basePath} />
+        <PhotoTile key={p.name} photo={p} basePath={basePath} tileSize={tileSize} zoomLevel={zoomLevel} />
       ))}
     </Box>
   );
@@ -207,6 +218,10 @@ const TileBrowserPane: React.FC = () => {
       window.removeEventListener('scroll', update);
     };
   }, [path]);
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('GALLERY');
+  const TILE_ICON = 120;
+  const TILE_GALLERY = 240;
+  const tileSize = zoomLevel === 'ICON' ? TILE_ICON : zoomLevel === 'GALLERY' ? TILE_GALLERY : undefined;
 
   useEffect(() => {
     if (!path) {
@@ -249,7 +264,7 @@ const TileBrowserPane: React.FC = () => {
               </Box>
 
               <Box sx={{ px: 1 }}>
-                <PhotoTiles photos={photos} basePath={path} />
+                <PhotoTiles photos={photos} basePath={path} tileSize={tileSize} zoomLevel={zoomLevel} />
               </Box>
             </Box>
           </Paper>
@@ -268,8 +283,26 @@ const TileBrowserPane: React.FC = () => {
               <Typography variant="subtitle2">Photos</Typography>
               <Button size="small" onClick={() => { /* placeholder */ }}>Refresh</Button>
             </Box>
-            <Box>
-              <Button size="small" variant="outlined">Options</Button>
+            <Box sx={{ width: 180, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ZoomOutIcon sx={{ color: 'text.secondary' }} />
+              <ToggleButtonGroup
+                value={zoomLevel}
+                exclusive
+                onChange={(_, v: ZoomLevel | null) => v && setZoomLevel(v)}
+                size="small"
+                aria-label="Zoom level"
+              >
+                <ToggleButton value="ICON" aria-label="icon">
+                  <GridViewIcon />
+                </ToggleButton>
+                <ToggleButton value="GALLERY" aria-label="gallery">
+                  <ViewModuleIcon />
+                </ToggleButton>
+                <ToggleButton value="LIST" aria-label="list">
+                  <CropSquareIcon />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              <ZoomInIcon sx={{ color: 'text.secondary' }} />
             </Box>
           </Box>
         </Box>
