@@ -41,6 +41,14 @@ export interface ThumbnailInfo {
  * PNG buffer and both thumbnail and full-size dimensions.
  */
 export declare function getThumbnail(absolutePath: string): ThumbnailInfo
+/** Full-size image information */
+export interface FullImageInfo {
+  dataBase64: string
+  width: number
+  height: number
+}
+/** Return the full-size image encoded as PNG and base64-encoded. */
+export declare function getFullImage(absolutePath: string): FullImageInfo
 export declare class TextureGenerator {
   constructor(width: number, height: number)
   /** Generate a procedural texture (gradient pattern) */

@@ -351,3 +351,54 @@ pub fn get_thumbnail(absolute_path: String) -> Result<ThumbnailInfo> {
         full_height: full_h,
     })
 }
+
+/// Full-size image information
+#[napi(object)]
+pub struct FullImageInfo {
+    pub data_base64: String,
+    pub width: u32,
+    pub height: u32,
+}
+
+/// Return the full-size image encoded as PNG and base64-encoded.
+#[napi]
+pub fn get_full_image(absolute_path: String) -> Result<FullImageInfo> {
+    let path = std::path::Path::new(&absolute_path);
+
+    if !path.exists() {
+        return Err(Error::from_reason(format!("Path does not exist: {}", absolute_path)));
+    }
+
+    if !path.is_file() {
+        return Err(Error::from_reason(format!("Path is not a file: {}", absolute_path)));
+    }
+
+    // Load image
+    let reader = image::io::Reader::open(path)
+        .map_err(|e| Error::from_reason(format!("Failed to open image: {}", e)))?;
+    let img = reader
+        .with_guessed_format()
+        .map_err(|e| Error::from_reason(format!("Failed to guess image format: {}", e)))?
+        .decode()
+        .map_err(|e| Error::from_reason(format!("Failed to decode image: {}", e)))?;
+
+    // Convert to RGBA8 and get dimensions
+    let base_img = img.to_rgba8();
+    let (w, h) = base_img.dimensions();
+
+    // Encode full image as PNG into memory
+    let mut buf: Vec<u8> = Vec::new();
+    let mut cursor = Cursor::new(&mut buf);
+    let dyn_img = DynamicImage::ImageRgba8(base_img);
+    dyn_img
+        .write_to(&mut cursor, ImageOutputFormat::Png)
+        .map_err(|e| Error::from_reason(format!("Failed to encode image: {}", e)))?;
+
+    let b64 = BASE64_STANDARD.encode(&buf);
+
+    Ok(FullImageInfo {
+        data_base64: b64,
+        width: w,
+        height: h,
+    })
+}
