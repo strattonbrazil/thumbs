@@ -132,13 +132,15 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: numb
           //setFocusedPhoto(fullPath);
         }}
         sx={{
-          width: zoomLevel === 'LIST' ? '100%' : tileSize,
-          height: zoomLevel === 'LIST' ? 'auto' : Math.round(tileSize * 0.75),
+          // LIST: full-width block where image defines height
+          // ICON/GALLERY: flexible grid tiles that start at tileSize and grow to fill the row
+          width: zoomLevel === 'LIST' ? '100%' : 'auto',
+          flex: zoomLevel === 'LIST' ? undefined : `1 1 ${tileSize}px`,
           bgcolor: active ? undefined : 'grey',
           borderRadius: 1,
           cursor: 'pointer',
           display: zoomLevel === 'LIST' ? 'block' : 'flex',
-          alignItems: zoomLevel === 'LIST' ? undefined : 'center',
+          alignItems: zoomLevel === 'LIST' ? undefined : 'stretch',
           justifyContent: zoomLevel === 'LIST' ? undefined : 'center',
           overflow: 'hidden',
           position: 'relative',
@@ -150,6 +152,7 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: numb
             borderWidth: '4px',
           },
           mb: zoomLevel === 'LIST' ? 1 : undefined,
+          height: zoomLevel === 'LIST' ? 'auto' : Math.round((tileSize ?? 240) * 0.75),
         }}
       >
         {thumb ? (
@@ -157,12 +160,13 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: numb
             src={`data:image/png;base64,${thumb.b64}`}
             onLoad={() => setImgLoaded(true)}
             style={{
-              objectFit: zoomLevel === 'LIST' ? 'contain' : 'cover',
+              objectFit: 'contain',
               objectPosition: 'center',
               width: '100%',
               height: zoomLevel === 'LIST' ? 'auto' : '100%',
               display: 'block',
               boxSizing: 'border-box',
+              backgroundColor: 'black'
             }}
             alt={photo.name}
           />
