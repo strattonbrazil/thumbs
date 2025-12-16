@@ -177,12 +177,53 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: numb
 };
 
 // Photo tile list component (kept above main component)
-const PhotoTiles: React.FC<{ photos: PhotoInfo[]; basePath?: string; tileSize?: number; zoomLevel?: ZoomLevel }> = ({ photos, basePath, tileSize, zoomLevel }) => {
+const PhotoTiles: React.FC<{ photos: PhotoInfo[]; basePath?: string; tileSize?: number; zoomLevel?: ZoomLevel }> = ({ photos, basePath, tileSize = 240, zoomLevel }) => {
   const isList = zoomLevel === 'LIST';
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [itemsPerRow, setItemsPerRow] = useState<number>(0);
+
+  useLayoutEffect(() => {
+    if (isList) {
+      setItemsPerRow(0);
+      return;
+    }
+
+    const gapPx = 8; // matches theme spacing 1
+
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const cw = el.clientWidth;
+      const per = Math.max(1, Math.floor((cw + gapPx) / (tileSize + gapPx)));
+      setItemsPerRow(per);
+    };
+
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [tileSize, isList]);
+
+  const placeholders = !isList && itemsPerRow > 0 ? (photos.length % itemsPerRow === 0 ? 0 : itemsPerRow - (photos.length % itemsPerRow)) : 0;
+
   return (
-    <Box sx={{ display: isList ? 'block' : 'flex', flexWrap: isList ? 'nowrap' : 'wrap', flexDirection: isList ? 'column' : 'row', gap: 1, mt: 1 }}>
+    <Box ref={containerRef} sx={{ display: isList ? 'block' : 'flex', flexWrap: isList ? 'nowrap' : 'wrap', flexDirection: isList ? 'column' : 'row', gap: 1, mt: 1 }}>
       {photos.map((p) => (
         <PhotoTile key={p.name} photo={p} basePath={basePath} tileSize={tileSize} zoomLevel={zoomLevel} />
+      ))}
+
+      {Array.from({ length: placeholders }).map((_, i) => (
+        <Box
+          key={`_placeholder_${i}`}
+          sx={{
+            flex: `1 1 ${tileSize}px`,
+            width: 'auto',
+            visibility: 'hidden',
+            pointerEvents: 'none',
+            mb: zoomLevel === 'LIST' ? 1 : undefined,
+            height: zoomLevel === 'LIST' ? 'auto' : Math.round((tileSize ?? 240) * 0.75),
+            boxSizing: 'border-box',
+          }}
+        />
       ))}
     </Box>
   );
