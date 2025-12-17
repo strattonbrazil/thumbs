@@ -277,7 +277,7 @@ pub fn get_dir_photos(absolute_path: String) -> Result<Vec<PhotoInfo>> {
     Ok(photos)
 }
 
-/// Thumbnail information
+/// Processed photo information
 #[napi(object)]
 pub struct ThumbnailInfo {
     pub data_base64: String,
@@ -287,11 +287,11 @@ pub struct ThumbnailInfo {
     pub full_height: u32,
 }
 
-/// Generate a thumbnail for the provided absolute image path. The thumbnail is scaled down
-/// to fit within 256x256 while preserving aspect ratio (no upscaling). Returns a base64-encoded
-/// PNG buffer and both thumbnail and full-size dimensions.
+/// Generate a processed photo for the provided absolute image path. The image is scaled down
+/// to fit within the provided `max_w` x `max_h` constraint while preserving aspect ratio
+/// (no upscaling). Returns a base64-encoded PNG buffer and both processed and full-size dimensions.
 #[napi]
-pub fn get_thumbnail(absolute_path: String) -> Result<ThumbnailInfo> {
+pub fn get_processed_photo(absolute_path: String, max_w: u32, max_h: u32) -> Result<ThumbnailInfo> {
     let path = std::path::Path::new(&absolute_path);
 
     if !path.exists() {
@@ -315,10 +315,11 @@ pub fn get_thumbnail(absolute_path: String) -> Result<ThumbnailInfo> {
     let base_img = img.to_rgba8();
     let (full_w, full_h) = base_img.dimensions();
 
-    // Compute scale (don't upscale)
-    let max_dim = 256.0f32;
-    let scale_w = max_dim / full_w as f32;
-    let scale_h = max_dim / full_h as f32;
+    // Compute scale based on provided constraints (don't upscale)
+    let mw = if max_w == 0 { full_w } else { max_w };
+    let mh = if max_h == 0 { full_h } else { max_h };
+    let scale_w = mw as f32 / full_w as f32;
+    let scale_h = mh as f32 / full_h as f32;
     let scale = scale_w.min(scale_h).min(1.0);
 
     let thumb_w = ((full_w as f32) * scale).round().max(1.0) as u32;

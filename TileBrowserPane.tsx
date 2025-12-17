@@ -25,6 +25,7 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: numb
   const [active, setActive] = useState(false);
   const [thumb, setThumb] = useState<{ b64: string; w: number; h: number } | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const lastReqRef = useRef<{ w: number; h: number } | null>(null);
   const setFocusedPhoto = useFocusedPhotoStore((s) => s.setPath);
 
   useEffect(() => {
@@ -82,37 +83,65 @@ const PhotoTile: React.FC<{ photo: PhotoInfo; basePath?: string; tileSize?: numb
     };
   }, []);
 
-  // Fetch thumbnail when tile becomes active
+  // Fetch processed image when tile becomes active (handles ICON/GALLERY and LIST sizing)
   useEffect(() => {
     let mounted = true;
-    if (active && !thumb && basePath) {
-      const getThumb = (window as any).nativePhotos?.getThumbnail;
-      if (typeof getThumb === 'function') {
-        const fullPath = basePath.endsWith('/') ? `${basePath}${photo.name}` : `${basePath}/${photo.name}`;
-        // call in microtask to avoid blocking paints
-        Promise.resolve().then(() => {
-          try {
-            const info = getThumb(fullPath);
-            if (mounted && info) {
-              const b64 = info.data_base64 ?? info.dataBase64 ?? info.data ?? null;
-              const w = info.thumb_width ?? info.thumbWidth ?? info.thumb_w ?? info.w ?? null;
-              const h = info.thumb_height ?? info.thumbHeight ?? info.thumb_h ?? info.h ?? null;
-              if (b64) {
-                setThumb({ b64, w: w ?? 0, h: h ?? 0 });
-                setImgLoaded(false);
-              }
-            }
-          } catch (_) {
-            // ignore
-          }
-        });
+    if (!active || !basePath) return;
+
+    const getProc = (window as any).nativePhotos?.getProcessedPhoto;
+    if (typeof getProc !== 'function') return;
+
+    const fullPath = basePath.endsWith('/') ? `${basePath}${photo.name}` : `${basePath}/${photo.name}`;
+    // compute desired tile constraints; LIST mode should request the full container width
+    let tileW = tileSize ?? 240;
+    let tileH = Math.round((tileSize ?? 240) * 0.75);
+    if (zoomLevel === 'LIST') {
+      const el = ref.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        tileW = Math.max(64, Math.round(rect.width));
+      } else {
+        tileW = Math.max(64, Math.round(window.innerWidth * 0.8));
       }
+      // allow a generous height so the image is only constrained by width
+      tileH = Math.max(64, Math.round(window.innerHeight * 0.8));
     }
+
+    const last = lastReqRef.current;
+    if (last && last.w === tileW && last.h === tileH && thumb) {
+      // already have a matching image
+      return () => {
+        mounted = false;
+      };
+    }
+
+    // record requested size so rapid toggles don't refetch repeatedly
+    lastReqRef.current = { w: tileW, h: tileH };
+    // clear existing thumb while fetching new size to avoid letterboxing small image
+    setThumb(null);
+
+    // call in microtask to avoid blocking paints
+    Promise.resolve().then(() => {
+      try {
+        const info = getProc(fullPath, tileW, tileH);
+        if (mounted && info) {
+          const b64 = info.data_base64 ?? info.dataBase64 ?? info.data ?? null;
+          const w = info.thumb_width ?? info.thumbWidth ?? info.thumb_w ?? info.w ?? null;
+          const h = info.thumb_height ?? info.thumbHeight ?? info.thumb_h ?? info.h ?? null;
+          if (b64) {
+            setThumb({ b64, w: w ?? 0, h: h ?? 0 });
+            setImgLoaded(false);
+          }
+        }
+      } catch (_) {
+        // ignore
+      }
+    });
 
     return () => {
       mounted = false;
     };
-  }, [active, basePath, photo.name, thumb]);
+  }, [active, basePath, photo.name, zoomLevel, tileSize]);
 
   // reset load flag when thumbnail changes/cleared
   useEffect(() => {

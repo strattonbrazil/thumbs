@@ -143,7 +143,18 @@ const DirectoryTree: React.FC = () => {
     <SimpleTreeView
       expandedItems={expanded}
       onExpandedItemsChange={(_: unknown, ids: string[]) => setExpanded(ids)}
-      onItemClick={(_: unknown, id: string) => {
+      onItemClick={(e: any, id: string) => {
+        // If the click originated from the expand/collapse icon, don't change selection.
+        // The icon container uses the class `MuiTreeItem-iconContainer`.
+        const target: Element | null = (e && (e.target || e.nativeEvent?.target)) ?? null;
+        let node: Element | null = target;
+        while (node) {
+          if (node.classList && node.classList.contains && node.classList.contains('MuiTreeItem-iconContainer')) {
+            return;
+          }
+          node = node.parentElement;
+        }
+
         // Update focused directory store with the clicked item's id (path)
         setFocusedPath(id as string);
       }}

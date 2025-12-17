@@ -27,7 +27,7 @@ export interface PhotoInfo {
  * includes the file name and a `native_render` flag (hardcoded to false).
  */
 export declare function getDirPhotos(absolutePath: string): Array<PhotoInfo>
-/** Thumbnail information */
+/** Processed photo information */
 export interface ThumbnailInfo {
   dataBase64: string
   thumbWidth: number
@@ -36,11 +36,11 @@ export interface ThumbnailInfo {
   fullHeight: number
 }
 /**
- * Generate a thumbnail for the provided absolute image path. The thumbnail is scaled down
- * to fit within 256x256 while preserving aspect ratio (no upscaling). Returns a base64-encoded
- * PNG buffer and both thumbnail and full-size dimensions.
+ * Generate a processed photo for the provided absolute image path. The image is scaled down
+ * to fit within the provided `max_w` x `max_h` constraint while preserving aspect ratio
+ * (no upscaling). Returns a base64-encoded PNG buffer and both processed and full-size dimensions.
  */
-export declare function getThumbnail(absolutePath: string): ThumbnailInfo
+export declare function getProcessedPhoto(absolutePath: string, maxW: number, maxH: number): ThumbnailInfo
 /** Full-size image information */
 export interface FullImageInfo {
   dataBase64: string

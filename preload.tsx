@@ -2,7 +2,7 @@ import { contextBridge } from 'electron';
 import * as path from 'path';
 
 // Use require for native module (CommonJS)
-const { TextureGenerator, getDirChildren, getDirPhotos, getThumbnail, getFullImage } = require(path.join(__dirname, '..', 'native'));
+const { TextureGenerator, getDirChildren, getDirPhotos, getProcessedPhoto, getFullImage } = require(path.join(__dirname, '..', 'native'));
 
 // Create a single generator instance
 const generator = new TextureGenerator(512, 512);
@@ -46,7 +46,7 @@ interface FullImageInfo {
 
 interface NativePhotoAPI {
   getDirPhotos: (absolutePath: string) => PhotoInfo[];
-  getThumbnail: (absolutePath: string) => ThumbnailInfo;
+  getProcessedPhoto: (absolutePath: string, maxW: number, maxH: number) => ThumbnailInfo;
   getFullImage: (absolutePath: string) => FullImageInfo;
 }
 
@@ -64,7 +64,7 @@ contextBridge.exposeInMainWorld('nativeDirectory', {
 
 contextBridge.exposeInMainWorld('nativePhotos', {
   getDirPhotos: (absolutePath: string) => getDirPhotos(absolutePath),
-  getThumbnail: (absolutePath: string) => getThumbnail(absolutePath),
+  getProcessedPhoto: (absolutePath: string, maxW: number, maxH: number) => getProcessedPhoto(absolutePath, maxW, maxH),
   getFullImage: (absolutePath: string) => getFullImage(absolutePath),
 } as NativePhotoAPI);
 
